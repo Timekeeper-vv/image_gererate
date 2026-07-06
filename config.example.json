@@ -1,0 +1,5 @@
+{
+  "apiKey": "your-siliconflow-api-key",
+  "model": "Kwai-Kolors/Kolors",
+  "imageSize": "1024x1024"
+}
