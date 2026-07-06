@@ -89,16 +89,21 @@ const server = http.createServer(async (req, res) => {
         sizeMatch && Number(sizeMatch[1]) >= 512 && Number(sizeMatch[2]) >= 512
           ? promptData.image_size
           : config.imageSize;
-      const { filename } = await generateAndSaveImage(config, {
-        prompt: promptData.positive_prompt,
-        negative: promptData.negative_prompt,
-        size: validSize,
-        steps: promptData.steps,
-        cfg: promptData.cfg,
-      });
+
+      const images = [];
+      for (const view of promptData.views) {
+        const { filename } = await generateAndSaveImage(config, {
+          prompt: view.positive_prompt,
+          negative: promptData.negative_prompt,
+          size: validSize,
+          steps: promptData.steps,
+          cfg: promptData.cfg,
+        });
+        images.push({ angle: view.angle, url: `/images/${filename}` });
+      }
 
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ brief, imageUrl: `/images/${filename}` }));
+      res.end(JSON.stringify({ brief, images }));
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ error: err.message }));
