@@ -66,7 +66,8 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === 'GET' && req.url.startsWith('/images/')) {
-    const filename = decodeURIComponent(req.url.replace('/images/', ''));
+    const pathname = req.url.split('?')[0];
+    const filename = decodeURIComponent(pathname.replace('/images/', ''));
     serveStatic(req, res, path.join(IMAGES_DIR, filename), 'image/png');
     return;
   }
