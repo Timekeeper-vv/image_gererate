@@ -2,3 +2,4 @@ config.json
 images/
 .claude/
 node_modules/
+*.log

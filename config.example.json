@@ -1,5 +1,6 @@
 {
   "apiKey": "your-siliconflow-api-key",
   "model": "Kwai-Kolors/Kolors",
+  "chatModel": "Qwen/Qwen2.5-32B-Instruct",
   "imageSize": "1024x1024"
 }

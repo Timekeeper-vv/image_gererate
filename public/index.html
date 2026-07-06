@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI文创设计生成器</title>
+<style>
+  body {
+    font-family: -apple-system, "Microsoft YaHei", sans-serif;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #222;
+    background: #fafafa;
+  }
+  h1 { font-size: 22px; }
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 14px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: inherit;
+  }
+  label { display: block; margin-top: 16px; font-weight: bold; font-size: 14px; }
+  button {
+    margin-top: 20px;
+    padding: 10px 24px;
+    font-size: 15px;
+    background: #2a6df4;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:disabled { background: #999; cursor: not-allowed; }
+  #status { margin-top: 16px; color: #666; }
+  #result { margin-top: 30px; display: none; }
+  #brief {
+    white-space: pre-wrap;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  #image {
+    margin-top: 20px;
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+  }
+  .error { color: #c0392b; margin-top: 16px; }
+</style>
+</head>
+<body>
+  <h1>🎯 AI 文创设计生成器</h1>
+
+  <label for="requirement">原始需求（必填）</label>
+  <textarea id="requirement" rows="4" placeholder="例如：给端午节做一款送企业客户的伴手礼，想用敦煌元素，年轻女性会喜欢的风格"></textarea>
+
+  <label for="materials">IP / 工艺资料（选填）</label>
+  <textarea id="materials" rows="3" placeholder="例如：工艺用平绣+烫金，成品尺寸8x10cm，面料是丝绸"></textarea>
+
+  <button id="submit">生成设计</button>
+  <div id="status"></div>
+
+  <div id="result">
+    <h2>设计 Brief</h2>
+    <div id="brief"></div>
+    <h2>生成图片</h2>
+    <img id="image" />
+  </div>
+
+  <script>
+    const submitBtn = document.getElementById('submit');
+    const statusEl = document.getElementById('status');
+    const resultEl = document.getElementById('result');
+    const briefEl = document.getElementById('brief');
+    const imageEl = document.getElementById('image');
+
+    submitBtn.addEventListener('click', async () => {
+      const requirement = document.getElementById('requirement').value.trim();
+      const materials = document.getElementById('materials').value.trim();
+      if (!requirement) {
+        statusEl.textContent = '请先填写原始需求';
+        statusEl.className = 'error';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      resultEl.style.display = 'none';
+      statusEl.className = '';
+      statusEl.textContent = '生成中，先产出 Brief 再生图，大约需要 10-30 秒…';
+
+      try {
+        const res = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requirement, materials }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '生成失败');
+
+        briefEl.textContent = data.brief;
+        imageEl.src = data.imageUrl + '?t=' + Date.now();
+        resultEl.style.display = 'block';
+        statusEl.textContent = '生成完成';
+      } catch (err) {
+        statusEl.textContent = '出错: ' + err.message;
+        statusEl.className = 'error';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
