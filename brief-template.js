@@ -8,11 +8,12 @@ const SYSTEM_PROMPT = `## Goals
 4. 输出格式必须严格遵循下方【Output Format】，不得增减模块。
 5. 配色方案必须提供潘通色号（Pantone）或CMYK参考值，禁用RGB/HEX等屏幕色。
 6. 我们做的是可生产的文创**产品实物**，不是插画、不是角色原画、不是海报。所有生图提示词必须以具体的产品品类（如"刺绣香囊""搪瓷杯""帆布包""金属书签"）作为主体，把文化图案/纹样描述为"印在/绣在/刻在该产品上的图案"，而不是脱离产品单独存在的人物或场景插画；提示词中必须包含产品摄影/实物质感关键词（如 product photography, e-commerce product shot, physical mockup, studio lighting, white/neutral background），并在负向提示词中排除纯插画/角色原画倾向（如 flat illustration, anime character illustration, concept art, isolated character without product body）。
+7. 【三视图必须是同一件产品】正视图/侧视图/背视图不是三个独立生成的画面，而是同一件产品实物从三个机位拍摄的照片，因此禁止让三者的产品描述出现任何差异。具体做法：先写出一段固定不变的"产品主体描述"（品类+材质+精确配色+图案/纹样细节+构图比例+摄影/实物质感关键词+背景+灯光设置，全部用具体值，不含任何角度/机位词），作为 base_prompt 只写一次；三视图各自只提供一句"角度/机位描述"（如 front view straight-on / 45-degree side view rotated right / back view rear facing camera），不得在角度描述里重复或改写产品本身的颜色、图案、材质等信息。三视图最终提示词由程序拼接 base_prompt + 角度描述，禁止在角度描述中引入与 base_prompt 矛盾或额外的产品细节。
 
 ## Workflow
 1. 解析【原始需求】，提取核心关键词（品类、人群、场景、文化IP）。
 2. 结合【IP/工艺资料】，补全文化细节与生产约束；信息缺失时按 Constraints 第2、3条填安全默认值并标注。
-3. 按【Output Format】生成结构化Brief，一次性输出完整内容，不分多轮追问；第4节必须产出正视图/侧视图/背视图三套独立的正向提示词，三者共用同一负向提示词与参数，且三套提示词都要满足 Constraints 第6条（产品实物、非插画）。
+3. 按【Output Format】生成结构化Brief，一次性输出完整内容，不分多轮追问；第4节必须先给出一段固定的产品主体描述（base_prompt），再分别给出正视图/侧视图/背视图三句角度描述，三者共用同一负向提示词与参数，且需满足 Constraints 第6、7条（产品实物、非插画、三视图为同一物体）。
 
 ## Output Format（严格按此结构输出）
 ### 🎯 AI文创设计需求Brief v1.0
@@ -38,10 +39,11 @@ const SYSTEM_PROMPT = `## Goals
 - 尺寸与出血：
 - 材质适配：
 
-#### 4. AI生图Prompt模板（三视图，可直接复用）
-- 正视图正向提示词：
-- 侧视图正向提示词：
-- 背视图正向提示词：
+#### 4. AI生图Prompt模板（三视图为同一产品实物，可直接复用）
+- 产品主体描述（base_prompt，三视图共用，不含角度信息）：
+- 正视图角度描述：
+- 侧视图角度描述：
+- 背视图角度描述：
 - 负向提示词（三视图通用）：
 - 推荐参数：[宽高比/步数/CFG Scale]
 
@@ -61,14 +63,16 @@ const SYSTEM_PROMPT = `## Goals
   "image_size": "如 1024x1024",
   "steps": 20,
   "cfg": 7.5,
+  "base_prompt": "英文为主的产品主体描述，三视图完全共用、逐字一致，须含产品品类词+材质+精确配色/图案描述+产品摄影/实物质感关键词+背景+光照，禁止包含任何角度/机位/朝向词汇",
+  "tripo_prompt": "英文为主、1000字符以内的 Tripo 文生3D模型提示词：必须描述单个完整可生产产品实物的材质、结构、配色和图案；不要写摄影机位、背景、人物、海报、插画、文字标签",
   "views": [
-    {"angle": "正视图", "positive_prompt": "英文为主的正向提示词，须含产品品类词+产品摄影/实物质感关键词+图案描述+光影/画质词"},
-    {"angle": "侧视图", "positive_prompt": "同上，但明确是该产品的侧面/45度角实拍"},
-    {"angle": "背视图", "positive_prompt": "同上，但明确是该产品的背面实拍"}
+    {"angle": "正视图", "angle_prompt": "英文，仅描述机位与朝向，如 front view, straight-on angle, centered composition，不得重复或改写产品本身信息"},
+    {"angle": "侧视图", "angle_prompt": "英文，仅描述机位与朝向，如 45-degree side view, rotated to the right，不得重复或改写产品本身信息"},
+    {"angle": "背视图", "angle_prompt": "英文，仅描述机位与朝向，如 back view, rear side facing camera，不得重复或改写产品本身信息"}
   ]
 }
 \`\`\`
-这个 JSON 代码块必须是回复的最后一部分内容，且必须是合法 JSON，views 必须正好包含三个元素。`;
+这个 JSON 代码块必须是回复的最后一部分内容，且必须是合法 JSON，views 必须正好包含三个元素，且 base_prompt 不能为空、不能包含任何角度/机位词汇。`;
 
 function buildUserMessage(requirement, materials) {
   let msg = `【原始需求】\n${requirement}`;
@@ -84,8 +88,14 @@ function splitBriefAndPrompt(content) {
     throw new Error('未能从大模型回复中解析出生图参数 JSON');
   }
   const promptData = JSON.parse(match[1]);
+  if (!promptData.base_prompt || !promptData.base_prompt.trim()) {
+    throw new Error('大模型未返回三视图共用的产品主体描述(base_prompt)');
+  }
   if (!Array.isArray(promptData.views) || promptData.views.length !== 3) {
     throw new Error('大模型未返回三视图的三套提示词');
+  }
+  if (promptData.views.some((v) => !v.angle_prompt || !v.angle_prompt.trim())) {
+    throw new Error('大模型未返回完整的三视图角度描述(angle_prompt)');
   }
   const brief = content.slice(0, match.index).trim();
   return { brief, promptData };

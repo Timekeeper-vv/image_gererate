@@ -1,146 +1,921 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AI文创设计生成器</title>
+<title>之间味道 AND TASTE · AI 文创定制方案</title>
 <style>
+  :root {
+    --bg: #090908;
+    --ink: #111;
+    --paper: #f6f1e7;
+    --paper-2: #fffaf0;
+    --gold: #c8a45d;
+    --gold-2: #f1d28b;
+    --text: #f8f3e8;
+    --muted: #bcb3a2;
+    --line: rgba(255,255,255,.12);
+    --card: rgba(255,255,255,.055);
+    --danger: #ff8a7a;
+    --ok: #86d9a4;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
-    font-family: -apple-system, "Microsoft YaHei", sans-serif;
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 0 20px;
-    color: #222;
-    background: #fafafa;
-  }
-  h1 { font-size: 22px; }
-  textarea {
-    width: 100%;
-    box-sizing: border-box;
-    font-size: 14px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-family: inherit;
-  }
-  label { display: block; margin-top: 16px; font-weight: bold; font-size: 14px; }
-  button {
-    margin-top: 20px;
-    padding: 10px 24px;
-    font-size: 15px;
-    background: #2a6df4;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  button:disabled { background: #999; cursor: not-allowed; }
-  #status { margin-top: 16px; color: #666; }
-  #result { margin-top: 30px; display: none; }
-  #brief {
-    white-space: pre-wrap;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-  #images {
-    margin-top: 20px;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  #images figure {
     margin: 0;
-    flex: 1 1 260px;
-    text-align: center;
+    color: var(--text);
+    font-family: "Noto Sans SC", "Microsoft YaHei", system-ui, -apple-system, Segoe UI, sans-serif;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(200,164,93,.18), transparent 28%),
+      radial-gradient(circle at 84% 8%, rgba(255,255,255,.08), transparent 26%),
+      linear-gradient(180deg, #0e0d0b 0%, #090908 46%, #12100d 100%);
+    min-height: 100vh;
+    line-height: 1.65;
   }
-  #images img {
-    width: 100%;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    background: white;
+  a { color: inherit; }
+  .container { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+  .serif { font-family: "Noto Serif SC", "Songti SC", Georgia, serif; }
+
+  .site-header {
+    position: sticky; top: 0; z-index: 30;
+    backdrop-filter: blur(18px);
+    background: rgba(9,9,8,.68);
+    border-bottom: 1px solid rgba(255,255,255,.08);
   }
-  #images figcaption {
-    margin-top: 6px;
-    font-size: 13px;
-    color: #555;
+  .nav { height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  .brand { display: flex; align-items: center; gap: 14px; min-width: 220px; }
+  .brand-logo { width: 56px; height: 56px; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid rgba(255,255,255,.16); }
+  .brand-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .brand-title strong { display: block; font-size: 19px; letter-spacing: .1em; font-weight: 700; }
+  .brand-title span { display: block; color: var(--gold-2); font-size: 11px; letter-spacing: .22em; margin-top: -2px; }
+  .nav-links { display: flex; gap: 24px; color: var(--muted); font-size: 13px; }
+  .nav-links a { text-decoration: none; transition: color .15s ease; }
+  .nav-links a:hover { color: var(--gold-2); }
+  .nav-cta { text-decoration: none; border: 1px solid rgba(200,164,93,.45); color: var(--gold-2); padding: 9px 15px; border-radius: 999px; font-size: 13px; }
+
+  .hero { padding: 86px 0 68px; position: relative; overflow: hidden; }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 50px; align-items: center; }
+  .eyebrow { color: var(--gold-2); letter-spacing: .24em; font-size: 12px; text-transform: uppercase; margin-bottom: 16px; }
+  h1 { font-size: clamp(34px, 5vw, 68px); line-height: 1.14; margin: 0 0 20px; letter-spacing: -.02em; }
+  .hero-copy { color: #d8d0bf; font-size: 17px; max-width: 650px; margin-bottom: 30px; }
+  .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn { border: none; cursor: pointer; border-radius: 999px; padding: 13px 22px; font-weight: 700; font-size: 14px; transition: transform .18s ease, opacity .18s ease, border-color .18s ease; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: linear-gradient(135deg, var(--gold-2), var(--gold)); color: #1d1304; }
+  .btn-ghost { color: var(--text); background: transparent; border: 1px solid rgba(255,255,255,.16); }
+  .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+  .hero-card {
+    border: 1px solid rgba(255,255,255,.13); background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
+    border-radius: 28px; padding: 28px; box-shadow: 0 34px 90px rgba(0,0,0,.35);
   }
-  .error { color: #c0392b; margin-top: 16px; }
+  .mock-proposal { background: var(--paper); color: var(--ink); border-radius: 22px; padding: 26px; min-height: 390px; position: relative; overflow: hidden; }
+  .mock-proposal::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(200,164,93,.18), transparent 38%); pointer-events: none; }
+  .mock-top { display: flex; align-items: center; gap: 12px; position: relative; }
+  .mock-top img { width: 44px; height: 44px; object-fit: contain; background: #fff; border-radius: 9px; }
+  .mock-top strong { display: block; letter-spacing: .08em; }
+  .mock-line { height: 1px; background: rgba(0,0,0,.12); margin: 20px 0; }
+  .mock-title { font-size: 28px; line-height: 1.25; margin: 0 0 12px; position: relative; }
+  .mock-tags { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0; }
+  .mock-tags span { background: #111; color: var(--paper); border-radius: 999px; padding: 5px 10px; font-size: 12px; }
+  .mock-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+  .mock-img { aspect-ratio: 1; border-radius: 14px; background: linear-gradient(135deg, #111, #3b3124); display: flex; align-items: center; justify-content: center; color: var(--gold-2); font-size: 12px; }
+
+  .section { padding: 76px 0; }
+  .section-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 26px; }
+  .section-head h2 { margin: 0; font-size: clamp(26px, 3vw, 40px); line-height: 1.2; }
+  .section-head p { margin: 0; color: var(--muted); max-width: 520px; }
+  .features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .case-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 34px; }
+  .case-card {
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+    border: 1px solid rgba(200,164,93,.22);
+    background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.028));
+    color: var(--text);
+    border-radius: 22px;
+    padding: 22px;
+    min-height: 168px;
+    cursor: pointer;
+    transition: transform .18s ease, border-color .18s ease, background .18s ease;
+  }
+  .case-card::before {
+    content: attr(data-index);
+    position: absolute;
+    right: 18px;
+    top: 12px;
+    color: rgba(200,164,93,.16);
+    font-family: Georgia, serif;
+    font-size: 54px;
+    line-height: 1;
+  }
+  .case-card:hover { transform: translateY(-3px); border-color: rgba(200,164,93,.62); background: linear-gradient(145deg, rgba(200,164,93,.13), rgba(255,255,255,.04)); }
+  .case-card b { display: block; color: var(--gold-2); font-size: 18px; margin-bottom: 10px; position: relative; }
+  .case-card p { color: var(--muted); margin: 0 0 16px; font-size: 13px; position: relative; }
+  .case-card span { color: rgba(241,210,139,.78); font-size: 12px; position: relative; }
+  .feature { border: 1px solid var(--line); background: var(--card); border-radius: 20px; padding: 22px; }
+  .feature b { display: block; color: var(--gold-2); margin-bottom: 8px; }
+  .feature p { color: var(--muted); margin: 0; font-size: 13px; }
+
+  .demo-wrap { display: grid; grid-template-columns: 420px 1fr; gap: 24px; align-items: start; }
+  .pricing-wrap { display: grid; grid-template-columns: 430px 1fr; gap: 24px; align-items: start; }
+  .three-fields { grid-template-columns: repeat(3, 1fr); }
+  .pricing-result-panel { min-height: 620px; }
+  .pricing-result { display: grid; gap: 16px; }
+  .quote-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .quote-metric { border: 1px solid var(--line); background: rgba(0,0,0,.18); border-radius: 16px; padding: 16px; }
+  .quote-metric span { display: block; color: var(--muted); font-size: 12px; }
+  .quote-metric b { display: block; color: var(--gold-2); font-size: 24px; margin-top: 4px; }
+  .quote-card { border: 1px solid var(--line); background: var(--card); border-radius: 18px; padding: 18px; }
+    .quote-card h4 { margin: 0 0 12px; color: var(--gold-2); }
+  .quote-advanced { border: 1px solid var(--line); border-radius: 16px; padding: 12px; margin: 12px 0 14px; background: rgba(0,0,0,.14); }
+  .quote-advanced summary { cursor: pointer; color: var(--gold-2); font-weight: 700; margin-bottom: 8px; }
+  .quote-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .quote-table th, .quote-table td { border-bottom: 1px solid rgba(255,255,255,.09); padding: 9px 6px; text-align: left; vertical-align: top; }
+  .quote-table th { color: var(--gold-2); font-weight: 700; }
+  .risk-high { color: #ff8a7a; }
+  .risk-medium { color: #ffd37c; }
+  .risk-low { color: #86d9a4; }
+  .panel { border: 1px solid var(--line); background: rgba(255,255,255,.05); border-radius: 26px; padding: 24px; box-shadow: 0 24px 70px rgba(0,0,0,.22); }
+  .panel-title { margin: 0 0 6px; font-size: 22px; }
+  .panel-subtitle { margin: 0 0 22px; color: var(--muted); font-size: 13px; }
+  .field { margin-bottom: 15px; }
+  label { display: block; font-size: 12px; color: var(--gold-2); margin-bottom: 7px; letter-spacing: .04em; }
+  input, select, textarea {
+    width: 100%; border: 1px solid rgba(255,255,255,.13); background: rgba(0,0,0,.22); color: var(--text);
+    border-radius: 14px; padding: 12px 13px; font: inherit; outline: none;
+  }
+  select option { color: #111; }
+  textarea { resize: vertical; min-height: 112px; }
+  input:focus, select:focus, textarea:focus { border-color: rgba(200,164,93,.8); box-shadow: 0 0 0 3px rgba(200,164,93,.12); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 18px; }
+  .chip { border: 1px solid rgba(200,164,93,.35); color: var(--gold-2); background: transparent; border-radius: 999px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+  .submit { width: 100%; margin-top: 4px; }
+
+  .result-panel { min-height: 620px; }
+  .empty, .loading, .error { min-height: 560px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--muted); }
+  .empty-symbol { width: 74px; height: 74px; border-radius: 50%; border: 1px solid rgba(200,164,93,.38); display: flex; align-items: center; justify-content: center; color: var(--gold-2); margin-bottom: 18px; font-size: 28px; }
+  .loader { width: 54px; height: 54px; border: 2px solid rgba(255,255,255,.13); border-top-color: var(--gold-2); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 18px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .result { display: none; gap: 28px; }
+  .result.visible { display: grid; }
+  .proposal-card { background: var(--paper-2); color: var(--ink); border-radius: 22px; padding: 24px; }
+  .proposal-card h2 { margin: 0 0 16px; font-size: 22px; }
+  .proposal-card h3 { color: #7c5a18; margin: 18px 0 8px; font-size: 16px; }
+  .proposal-card p, .proposal-card li { font-size: 14px; }
+  .proposal-card ul { padding-left: 20px; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .small-btn { border: 1px solid rgba(255,255,255,.14); background: transparent; color: var(--text); border-radius: 10px; padding: 8px 11px; cursor: pointer; }
+  .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .image-card { margin: 0; border: 1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.25); border-radius: 18px; overflow: hidden; }
+  .image-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+  .image-card figcaption { padding: 9px 12px; color: var(--muted); font-size: 12px; }
+  .model-box, .lead-box { border: 1px solid var(--line); background: var(--card); border-radius: 20px; padding: 20px; }
+  .model-box p, .lead-box p { color: var(--muted); margin: 6px 0; font-size: 13px; }
+  .model-preview { margin-top: 12px; display: grid; grid-template-columns: 180px 1fr; gap: 16px; align-items: center; }
+  .model-preview img { width: 180px; aspect-ratio: 1; object-fit: cover; border-radius: 16px; background: #111; }
+  .link-btn { display: inline-flex; margin: 5px 8px 5px 0; text-decoration: none; background: var(--gold); color: #1d1304; border-radius: 10px; padding: 8px 11px; font-size: 12px; font-weight: 700; }
+  .lead-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0 10px; }
+  .status { color: var(--gold-2); font-size: 13px; margin-left: 10px; }
+  .error-detail { color: var(--danger); }
+
+  .footer { border-top: 1px solid var(--line); padding: 34px 0 46px; color: var(--muted); font-size: 12px; }
+  .footer-inner { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+
+  @media (max-width: 980px) {
+    .hero-grid, .demo-wrap, .pricing-wrap { grid-template-columns: 1fr; }
+    .features, .case-grid { grid-template-columns: repeat(2, 1fr); }
+    .nav-links { display: none; }
+  }
+  @media (max-width: 680px) {
+    .container { width: min(100% - 24px, 1180px); }
+    .hero { padding-top: 52px; }
+    .features, .case-grid, .gallery, .lead-grid, .two, .three-fields, .model-preview, .quote-summary { grid-template-columns: 1fr; }
+    .model-preview img { width: 100%; }
+    .brand-title strong { font-size: 16px; }
+    .nav-cta { display: none; }
+  }
+
+
+  /* Mobile experience upgrade */
+  .mobile-float-cta { display: none; }
+
+  @media (max-width: 680px) {
+    body { padding-bottom: 74px; }
+    .site-header { position: sticky; }
+    .nav { height: 66px; }
+    .brand { gap: 10px; min-width: auto; }
+    .brand-logo { width: 44px; height: 44px; border-radius: 10px; }
+    .brand-title strong { font-size: 15px; letter-spacing: .08em; }
+    .brand-title span { font-size: 9px; letter-spacing: .16em; }
+
+    .hero { padding: 34px 0 40px; }
+    .eyebrow { font-size: 10px; letter-spacing: .16em; margin-bottom: 10px; }
+    h1 { font-size: 34px; line-height: 1.18; margin-bottom: 14px; }
+    .hero-copy { font-size: 14px; margin-bottom: 20px; }
+    .hero-actions { display: none; }
+    .hero-card { padding: 12px; border-radius: 20px; }
+    .mock-proposal { min-height: auto; padding: 18px; border-radius: 18px; }
+    .mock-title { font-size: 21px; }
+    .mock-grid { gap: 8px; }
+    .mock-img { border-radius: 11px; font-size: 11px; }
+
+    .section { padding: 42px 0; }
+    .section-head { display: block; margin-bottom: 18px; }
+    .section-head h2 { font-size: 26px; margin-bottom: 10px; }
+    .section-head p { font-size: 13px; }
+    .feature { padding: 16px; border-radius: 16px; }
+    .case-grid { gap: 12px; margin-bottom: 24px; }
+    .case-card { min-height: 142px; padding: 18px; border-radius: 18px; }
+    .case-card b { font-size: 16px; }
+    .case-card::before { font-size: 42px; right: 14px; }
+
+    .demo-wrap { gap: 16px; }
+    .panel { padding: 16px; border-radius: 20px; }
+    .panel-title { font-size: 20px; }
+    .panel-subtitle { font-size: 12px; margin-bottom: 16px; }
+    .field { margin-bottom: 12px; }
+    label { font-size: 12px; }
+    input, select, textarea {
+      min-height: 46px;
+      border-radius: 13px;
+      padding: 11px 12px;
+      font-size: 16px; /* prevents iOS input zoom */
+    }
+    textarea { min-height: 116px; }
+    .chips { gap: 7px; margin-bottom: 14px; }
+    .chip { padding: 8px 11px; font-size: 12px; min-height: 36px; }
+    .btn { min-height: 48px; padding: 12px 18px; }
+    .submit { position: sticky; bottom: 12px; z-index: 20; box-shadow: 0 14px 36px rgba(0,0,0,.35); }
+
+    .result-panel, .pricing-result-panel { min-height: 420px; }
+    .quote-metric b { font-size: 20px; }
+    .quote-card { padding: 14px; overflow-x: auto; }
+    .quote-table { min-width: 520px; }
+    .pricing-wrap .submit { position: static; }
+    .empty, .loading, .error { min-height: 360px; padding: 20px 4px; }
+    .empty-symbol { width: 58px; height: 58px; font-size: 22px; }
+    .result.visible { gap: 18px; }
+    .toolbar { align-items: center; margin-bottom: 10px; }
+    .toolbar .panel-title { font-size: 18px; }
+    .small-btn { min-height: 38px; padding: 8px 10px; font-size: 12px; }
+    .proposal-card { padding: 16px; border-radius: 18px; max-height: 520px; overflow: auto; -webkit-overflow-scrolling: touch; }
+    .proposal-card h2 { font-size: 19px; }
+    .proposal-card h3 { font-size: 15px; }
+    .proposal-card p, .proposal-card li { font-size: 13px; }
+
+    .gallery { grid-template-columns: 1fr; gap: 12px; }
+    .image-card { border-radius: 16px; }
+    .image-card img { max-height: 74vh; }
+    .image-card figcaption { font-size: 13px; }
+    .model-box, .lead-box { padding: 16px; border-radius: 18px; }
+    .lead-grid { gap: 9px; }
+    .footer { padding: 24px 0 30px; }
+
+    .mobile-float-cta {
+      position: fixed;
+      left: 14px; right: 14px; bottom: 12px;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+      border-radius: 999px;
+      text-decoration: none;
+      color: #1d1304;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      box-shadow: 0 14px 38px rgba(0,0,0,.42);
+      border: 1px solid rgba(255,255,255,.28);
+    }
+    body.generating .mobile-float-cta,
+    body.has-result .mobile-float-cta,
+    body.demoInView .mobile-float-cta { display: none; }
+  }
+
+  @media (max-width: 380px) {
+    h1 { font-size: 30px; }
+    .brand-title strong { font-size: 14px; }
+    .panel { padding: 14px; }
+    .mock-tags span { font-size: 11px; padding: 4px 8px; }
+  }
+
+  /* Light dashboard layout upgrade */
+  :root {
+    --bg: #f6f1e8;
+    --ink: #17130d;
+    --paper: #fffaf0;
+    --paper-2: #ffffff;
+    --gold: #b88a2e;
+    --gold-2: #8a5f12;
+    --text: #1d1810;
+    --muted: #756b5d;
+    --line: rgba(66, 45, 15, .14);
+    --card: rgba(255, 255, 255, .78);
+    --danger: #c34735;
+    --ok: #26834a;
+  }
+
+  body {
+    color: var(--text);
+    background:
+      radial-gradient(circle at 12% 0%, rgba(184,138,46,.12), transparent 30%),
+      linear-gradient(180deg, #fbf7ef 0%, #f3eadb 100%);
+  }
+
+  .site-header {
+    background: rgba(255, 250, 240, .86);
+    border-bottom: 1px solid rgba(66,45,15,.12);
+    box-shadow: 0 8px 30px rgba(73, 51, 20, .08);
+  }
+  .hero-card, .panel, .feature, .case-card, .model-box, .lead-box, .quote-card, .quote-metric {
+    background: rgba(255,255,255,.78);
+    border-color: rgba(66,45,15,.13);
+    box-shadow: 0 18px 50px rgba(73, 51, 20, .08);
+  }
+  input, select, textarea {
+    background: rgba(255,255,255,.88);
+    color: var(--text);
+    border-color: rgba(66,45,15,.16);
+  }
+  .quote-advanced { background: rgba(255,255,255,.56); }
+  .btn-ghost { color: var(--text); border-color: rgba(66,45,15,.18); background: rgba(255,255,255,.42); }
+  .mock-img { background: linear-gradient(135deg, #f6ecd9, #d7bd82); color: #4b3211; }
+  .proposal-card { background: #fff; box-shadow: 0 18px 50px rgba(73, 51, 20, .08); }
+  .quote-table th, .quote-table td { border-bottom-color: rgba(66,45,15,.11); }
+  .empty-symbol { border-color: rgba(184,138,46,.32); }
+
+  @media (min-width: 981px) {
+    body { padding-left: 246px; }
+    .site-header {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      width: 246px;
+      border-right: 1px solid rgba(66,45,15,.12);
+      border-bottom: none;
+      z-index: 80;
+    }
+    .site-header .container.nav {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 28px 22px;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 28px;
+    }
+    .brand { min-width: 0; align-items: flex-start; }
+    .brand-logo { width: 64px; height: 64px; box-shadow: 0 8px 24px rgba(73,51,20,.1); }
+    .brand-title strong { color: var(--text); }
+    .nav-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 14px;
+    }
+    .nav-links a {
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--muted);
+    }
+    .nav-links a:hover {
+      background: rgba(184,138,46,.12);
+      color: var(--gold-2);
+    }
+    .nav-cta {
+      margin-top: auto;
+      text-align: center;
+      background: linear-gradient(135deg, #ead39c, #c99b45);
+      color: #241804;
+      border: none;
+    }
+    .hero { padding-top: 64px; }
+    .container { width: min(1120px, calc(100% - 52px)); }
+  }
+
+  /* App section switch */
+  .app-view { display: none; }
+  .app-view.active { display: block; }
+  .nav-links a.active {
+    background: rgba(184,138,46,.14);
+    color: var(--gold-2);
+    font-weight: 700;
+  }
+  @media (min-width: 981px) {
+    main { min-height: 100vh; }
+    .app-view.active { animation: viewFade .22s ease; }
+    @keyframes viewFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  }
 </style>
 </head>
 <body>
-  <h1>🎯 AI 文创设计生成器</h1>
-
-  <label for="requirement">原始需求（必填）</label>
-  <textarea id="requirement" rows="4" placeholder="例如：给端午节做一款送企业客户的伴手礼，想用敦煌元素，年轻女性会喜欢的风格"></textarea>
-
-  <label for="materials">IP / 工艺资料（选填）</label>
-  <textarea id="materials" rows="3" placeholder="例如：工艺用平绣+烫金，成品尺寸8x10cm，面料是丝绸"></textarea>
-
-  <button id="submit">生成设计</button>
-  <div id="status"></div>
-
-  <div id="result">
-    <h2>设计 Brief</h2>
-    <div id="brief"></div>
-    <h2>产品三视图</h2>
-    <div id="images"></div>
+<header class="site-header">
+  <div class="container nav">
+    <a class="brand nav-view" href="#home" data-target="home" style="text-decoration:none;">
+      <div class="brand-logo"><img src="/and-taste-logo.png" alt="之间味道 Logo"></div>
+      <div class="brand-title"><strong>之间味道</strong><span>AND TASTE</span></div>
+    </a>
+    <nav class="nav-links">
+      <a href="#service" class="nav-view" data-target="service">服务能力</a>
+      <a href="#demo" class="nav-view" data-target="demo">生成方案</a>
+      <a href="#pricing" class="nav-view" data-target="pricing">生产报价</a>
+      <a href="#demo" class="nav-view" data-target="demo">提交需求</a>
+    </nav>
+    <a class="nav-cta nav-view" href="#demo" data-target="demo">开始定制</a>
   </div>
+</header>
 
-  <script>
-    const submitBtn = document.getElementById('submit');
-    const statusEl = document.getElementById('status');
-    const resultEl = document.getElementById('result');
-    const briefEl = document.getElementById('brief');
-    const imagesEl = document.getElementById('images');
+<main id="top">
+  <section class="hero app-view active" data-view="home" id="home">
+    <div class="container hero-grid">
+      <div>
+        <div class="eyebrow">AND TASTE · AI CULTURAL PRODUCT STUDIO</div>
+        <h1 class="serif">把一个文创想法，<br>变成可展示、可打样、可成交的产品方案。</h1>
+        <p class="hero-copy">面向品牌客户、博物馆、文旅景区与企业礼赠场景，之间味道用 AI 快速生成产品 Brief、三视图效果图与 3D 模型预览，帮助创意更快进入提案与打样。</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary nav-view" href="#demo" data-target="demo" style="text-decoration:none;">免费生成一版方案</a>
+          <a class="btn btn-ghost nav-view" href="#service" data-target="service" style="text-decoration:none;">查看服务能力</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="mock-proposal">
+          <div class="mock-top">
+            <img src="/and-taste-logo.png" alt="之间味道">
+            <div><strong>之间味道</strong><span style="font-size:12px;color:#6f6250;">AI 文创提案预览</span></div>
+          </div>
+          <div class="mock-line"></div>
+          <h2 class="mock-title serif">城市记忆 × 伴手礼产品概念</h2>
+          <p style="position:relative;color:#5c5143;">从文化符号、产品载体、工艺落地到客户转化，自动生成一份适合沟通的设计方向。</p>
+          <div class="mock-tags"><span>博物馆文创</span><span>节庆礼赠</span><span>可打样</span></div>
+          <div class="mock-grid"><div class="mock-img">正视图</div><div class="mock-img">侧视图</div><div class="mock-img">背视图</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    submitBtn.addEventListener('click', async () => {
-      const requirement = document.getElementById('requirement').value.trim();
-      const materials = document.getElementById('materials').value.trim();
-      if (!requirement) {
-        statusEl.textContent = '请先填写原始需求';
-        statusEl.className = 'error';
-        return;
-      }
+  <section class="section app-view" id="service" data-view="service">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="serif">从灵感到提案，<br>我们把文创开发前置可视化。</h2>
+        <p>客户只需描述产品方向，系统即可输出结构化设计方案、产品效果图与后续沟通所需的核心信息。</p>
+      </div>
+            <div class="case-grid" id="caseCards">
+        <button class="case-card" type="button" data-index="01" data-type="博物馆文创" data-scene="博物馆商店" data-style="博物馆典藏风" data-budget="80-150元" data-idea="想结合博物馆馆藏纹样与文化故事，开发一款适合馆店售卖、兼具收藏感和实用性的文创产品。">
+          <b>博物馆文创开发</b><p>围绕馆藏纹样、展览主题和文化故事，生成可售卖、可传播的产品方案。</p><span>适合馆店新品 / 特展周边 / 典藏礼品 →</span>
+        </button>
+        <button class="case-card" type="button" data-index="02" data-type="城市伴手礼" data-scene="文旅景区售卖" data-style="东方极简高级感" data-budget="30-80元" data-idea="想围绕城市地标、地方风物和旅行记忆，开发一款游客愿意购买并带走的城市伴手礼。">
+          <b>文旅景区伴手礼</b><p>提炼城市地标、地方风味与旅途记忆，快速形成景区零售产品方向。</p><span>适合游客打卡 / 景区商店 / 城市礼物 →</span>
+        </button>
+        <button class="case-card" type="button" data-index="03" data-type="企业礼赠" data-scene="企业客户礼赠" data-style="商务礼赠风" data-budget="150-300元" data-idea="想做一款适合企业客户赠送的定制礼品，要求有品牌质感、文化表达和较高交付完成度。">
+          <b>企业礼赠定制</b><p>结合企业品牌、商务场景和预算区间，生成更适合客户拜访与活动赠礼的方案。</p><span>适合客户礼 / 年会礼 / 品牌联名 →</span>
+        </button>
+        <button class="case-card" type="button" data-index="04" data-type="节庆礼盒" data-scene="节日活动赠品" data-style="非遗手作质感" data-budget="80-150元" data-idea="想围绕传统节日开发一款限定礼盒，需要兼顾节日氛围、开箱体验和批量生产可行性。">
+          <b>节庆礼盒策划</b><p>围绕节日主题、礼盒结构和开箱体验，生成适合节点销售的限定方案。</p><span>适合端午 / 中秋 / 春节 / 活动礼 →</span>
+        </button>
+        <button class="case-card" type="button" data-index="05" data-type="食品文创" data-scene="线下快闪活动" data-style="年轻国潮风" data-budget="30元以内" data-idea="想开发一款食品文创产品，既适合拍照传播，也要考虑口味、包装、冷链或保质期等落地因素。">
+          <b>食品文创开发</b><p>把地方味道、文化符号和包装体验结合，适合雪糕、巧克力、糕点等品类。</p><span>适合打卡食品 / 快闪活动 / 伴手礼 →</span>
+        </button>
+        <button class="case-card" type="button" data-index="06" data-type="IP 周边设计" data-scene="电商新品上架" data-style="可爱治愈风" data-budget="30-80元" data-idea="想围绕一个IP形象开发系列周边，需要年轻、可爱、有购买冲动，并适合线上售卖。">
+          <b>IP 周边设计</b><p>围绕角色、IP世界观与用户喜好，延展冰箱贴、毛绒、文具、徽章等产品。</p><span>适合角色周边 / 联名新品 / 电商套装 →</span>
+        </button>
+      </div>
+      <div class="features">
+        <div class="feature"><b>01 品牌化提案</b><p>输出更适合客户理解的产品定位、卖点、风格与应用场景。</p></div>
+        <div class="feature"><b>02 三视图效果</b><p>正面、侧面、背面统一生成，便于内部评审和供应商沟通。</p></div>
+        <div class="feature"><b>03 3D 模型预览</b><p>接入 Tripo 后可生成模型预览，辅助判断产品结构和展示效果。</p></div>
+        <div class="feature"><b>04 需求线索收集</b><p>客户生成后可直接留下联系方式，形成可跟进的定制需求。</p></div>
+      </div>
+    </div>
+  </section>
 
-      submitBtn.disabled = true;
-      resultEl.style.display = 'none';
-      imagesEl.innerHTML = '';
-      statusEl.className = '';
-      statusEl.textContent = '生成中，先产出 Brief 再生成正视图/侧视图/背视图三张图，大约需要 30-60 秒…';
+  <section class="section app-view" id="demo" data-view="demo">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="serif">客户自助生成一版文创定制方案</h2>
+        <p>选择基础方向，补充一句想法，系统会自动生成适合提案沟通的文创产品概念。</p>
+      </div>
+      <div class="demo-wrap">
+        <section class="panel">
+          <h3 class="panel-title serif">定制需求</h3>
+          <p class="panel-subtitle">适合客户演示：少填参数，快速看到方向。</p>
+          <div class="two">
+            <div class="field"><label>产品类型</label><select id="productType"><option>城市伴手礼</option><option>博物馆文创</option><option>企业礼赠</option><option>节庆礼盒</option><option>冰箱贴/徽章</option><option>毛绒挂件</option><option>文具周边</option><option>食品文创</option><option>IP 周边设计</option></select></div>
+            <div class="field"><label>使用场景</label><select id="scene"><option>文旅景区售卖</option><option>博物馆商店</option><option>企业客户礼赠</option><option>节日活动赠品</option><option>电商新品上架</option><option>线下快闪活动</option></select></div>
+          </div>
+          <div class="two">
+            <div class="field"><label>风格方向</label><select id="style"><option>东方极简高级感</option><option>年轻国潮风</option><option>可爱治愈风</option><option>非遗手作质感</option><option>商务礼赠风</option><option>博物馆典藏风</option></select></div>
+            <div class="field"><label>预算/客单价</label><select id="budget"><option>30元以内</option><option>30-80元</option><option>80-150元</option><option>150-300元</option><option>300元以上</option></select></div>
+          </div>
+          <div class="field"><label>一句话需求</label><textarea id="idea" placeholder="例如：想做一款适合游客打卡购买的敦煌风伴手礼，年轻女性会喜欢，最好能做成礼盒。"></textarea></div>
+          <div class="chips">
+            <button class="chip" data-idea="想围绕城市地标和地方饮食文化，做一款适合游客带走的伴手礼。">城市地标</button>
+            <button class="chip" data-idea="想结合博物馆馆藏纹样，做一款高级、适合送礼的文创产品。">馆藏纹样</button>
+            <button class="chip" data-idea="想做一款节庆限定礼盒，兼具拍照传播和实际使用价值。">节庆礼盒</button>
+            <button class="chip" data-idea="想做一款适合年轻人购买的可爱小周边，价格不要太高。">年轻周边</button>
+          </div>
+          <button id="submit" class="btn btn-primary submit">生成文创方案</button>
+        </section>
 
-      try {
-        const res = await fetch('/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ requirement, materials }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || '生成失败');
+        <section class="panel result-panel">
+          <div class="empty" id="emptyState"><div class="empty-symbol">味</div><p>填写左侧需求后，这里会展示客户友好的设计方案、三视图和 3D 模型状态。</p></div>
+          <div class="loading" id="loadingState" style="display:none;"><div class="loader"></div><p>正在生成设计方案与效果图，通常需要 1-3 分钟。<br>如果 Tripo 额度不足，三视图仍会正常展示。</p></div>
+          <div class="error" id="errorState" style="display:none;"><div class="empty-symbol">!</div><p>生成失败</p><p class="error-detail" id="errorDetail"></p></div>
 
-        briefEl.textContent = data.brief;
-        for (const img of data.images) {
-          const figure = document.createElement('figure');
-          const imgEl = document.createElement('img');
-          imgEl.src = img.url + '?t=' + Date.now();
-          const caption = document.createElement('figcaption');
-          caption.textContent = img.angle;
-          figure.appendChild(imgEl);
-          figure.appendChild(caption);
-          imagesEl.appendChild(figure);
-        }
-        resultEl.style.display = 'block';
-        statusEl.textContent = '生成完成';
-      } catch (err) {
-        statusEl.textContent = '出错: ' + err.message;
-        statusEl.className = 'error';
-      } finally {
-        submitBtn.disabled = false;
-      }
+          <div class="result" id="resultContent">
+            <div>
+              <div class="toolbar"><h3 class="panel-title serif">客户提案预览</h3><button class="small-btn" id="copyBrief">复制方案</button></div>
+              <div class="proposal-card" id="brief"></div>
+            </div>
+            <div>
+              <div class="toolbar"><h3 class="panel-title serif">产品效果三视图</h3><button class="small-btn" id="downloadImages">打开图片</button></div>
+              <div class="gallery" id="images"></div>
+            </div>
+            <div class="model-box" id="tripo"></div>
+            <div class="lead-box" id="contact">
+              <h3 class="panel-title serif">喜欢这个方向？提交需求给我们</h3>
+              <p>留下联系方式，我们会基于这版 AI 方案继续沟通预算、材质、打样和交期。</p>
+              <div class="lead-grid">
+                <input id="leadName" placeholder="姓名" />
+                <input id="leadPhone" placeholder="手机/微信" />
+                <input id="leadCompany" placeholder="公司/机构（选填）" />
+              </div>
+              <textarea id="leadNote" placeholder="补充说明：数量、预算、期望交期等（选填）" style="min-height:86px;"></textarea>
+              <div style="margin-top:12px;"><button class="btn btn-primary" id="sendLead">提交定制需求</button><span class="status" id="leadStatus"></span></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+  <section class="section app-view" id="pricing" data-view="pricing">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="serif">生产报价粗估</h2>
+        <p>输入材质、尺寸、工艺和数量，快速获得成本拆解、工期预估和风险提示。当前为 MVP 估算，适合前期决策和供应商询价前准备。</p>
+      </div>
+      <div class="pricing-wrap">
+        <section class="panel">
+          <h3 class="panel-title serif">报价参数</h3>
+          <p class="panel-subtitle">先做粗估，后续可接历史订单和供应商实时报价提升准确度。</p>
+          <div class="two">
+            <div class="field"><label>报价品类</label><select id="priceCategory"><option value="chocolate">巧克力文创</option><option value="icecream">雪糕/冰品文创</option><option value="fridge_magnet">冰箱贴/徽章/钥匙扣</option><option value="plush">毛绒玩具/挂件</option><option value="stationery">文具/纸品周边</option><option value="packaging">礼盒/包装物料</option></select></div>
+            <div class="field"><label>数量</label><input id="priceQuantity" type="number" min="1" value="1000" placeholder="例如 3000" /></div>
+          </div>
+          <div class="two">
+            <div class="field"><label>材质/原料</label><input id="priceMaterial" placeholder="例如 锌合金 / 高端可可脂 / 短毛绒" /></div>
+            <div class="field"><label>单件克重 g</label><input id="priceWeight" type="number" min="0" placeholder="食品类建议填写" /></div>
+          </div>
+          <div class="two three-fields">
+            <div class="field"><label>长 mm</label><input id="priceLength" type="number" min="0" placeholder="65" /></div>
+            <div class="field"><label>宽 mm</label><input id="priceWidth" type="number" min="0" placeholder="48" /></div>
+            <div class="field"><label>高/厚 mm</label><input id="priceHeight" type="number" min="0" placeholder="4" /></div>
+          </div>
+          <div class="two">
+            <div class="field"><label>颜色/印刷色数</label><input id="priceColors" type="number" min="1" max="12" value="4" /></div>
+            <div class="field"><label>包装方式</label><select id="pricePackaging"><option value="standard">普通包装</option><option value="gift_box">礼盒包装</option><option value="custom">定制包装</option></select></div>
+          </div>
+          <div class="field"><label>工艺</label><input id="priceProcess" placeholder="多个工艺用逗号分隔，例如 压铸,电镀,滴胶" /></div>
+          <details class="quote-advanced">
+            <summary>非标精算参数（冰箱贴/毛绒选填）</summary>
+            <div class="two three-fields">
+              <div class="field"><label>材料单价 元/kg</label><input id="nonMaterialPriceKg" type="number" min="0" placeholder="锌合金35" /></div>
+              <div class="field"><label>单件重量 kg</label><input id="nonMaterialWeightKg" type="number" min="0" step="0.001" placeholder="0.03" /></div>
+              <div class="field"><label>磁铁/配件</label><input id="nonMagnetCost" type="number" min="0" placeholder="0.15" /></div>
+            </div>
+            <div class="two three-fields">
+              <div class="field"><label>面料单价 元/米</label><input id="nonFabricPrice" type="number" min="0" placeholder="毛绒类" /></div>
+              <div class="field"><label>单件面料用量</label><input id="nonFabricUsage" type="number" min="0" step="0.01" placeholder="米/件" /></div>
+              <div class="field"><label>填充重量 kg</label><input id="nonFillingWeight" type="number" min="0" step="0.01" placeholder="毛绒类" /></div>
+            </div>
+            <div class="two three-fields">
+              <div class="field"><label>模具费</label><input id="nonMoldFee" type="number" min="0" placeholder="12000" /></div>
+              <div class="field"><label>模具复杂系数</label><input id="nonMoldComplexity" type="number" min="0" step="0.1" placeholder="1.0" /></div>
+              <div class="field"><label>上机/起版费</label><input id="nonSetupFee" type="number" min="0" placeholder="800" /></div>
+            </div>
+            <div class="two three-fields">
+              <div class="field"><label>加工单件费</label><input id="nonProcessingUnit" type="number" min="0" placeholder="0.15" /></div>
+              <div class="field"><label>电镀/表面处理</label><input id="nonPlatingUnit" type="number" min="0" placeholder="1.3" /></div>
+              <div class="field"><label>UV起版费</label><input id="nonUvSetup" type="number" min="0" placeholder="300" /></div>
+            </div>
+            <div class="two three-fields">
+              <div class="field"><label>UV单件费</label><input id="nonUvUnit" type="number" min="0" placeholder="0.2" /></div>
+              <div class="field"><label>组装单件费</label><input id="nonAssemblyUnit" type="number" min="0" placeholder="0.1" /></div>
+              <div class="field"><label>OPP袋</label><input id="nonOppCost" type="number" min="0" placeholder="0.08" /></div>
+            </div>
+            <div class="two three-fields">
+              <div class="field"><label>吸塑卡/挂卡</label><input id="nonBlisterCost" type="number" min="0" placeholder="0.4" /></div>
+              <div class="field"><label>说明卡</label><input id="nonInstructionCost" type="number" min="0" placeholder="0.1" /></div>
+              <div class="field"><label>填充物单价 元/kg</label><input id="nonFillingPrice" type="number" min="0" placeholder="PP棉12" /></div>
+            </div>
+          </details>
+          <details class="quote-advanced">
+            <summary>食品精算参数（雪糕/巧克力选填）</summary>
+            <div class="two">
+              <div class="field"><label>主料单价 元/kg</label><input id="foodRawPrice" type="number" min="0" placeholder="例如 80" /></div>
+              <div class="field"><label>辅料单件成本</label><input id="foodAuxCost" type="number" min="0" placeholder="例如 0.5" /></div>
+            </div>
+            <div class="two">
+              <div class="field"><label>损耗率</label><input id="foodLossRate" type="number" min="0" max="0.5" step="0.01" placeholder="例如 0.05" /></div>
+              <div class="field"><label>模具费</label><input id="foodMoldFee" type="number" min="0" placeholder="例如 8000" /></div>
+            </div>
+            <div class="two">
+              <div class="field"><label>模具类型</label><select id="foodMoldType"><option value="">系统默认</option><option value="silicone">硅胶模</option><option value="abs">ABS塑料模</option><option value="metal">金属模</option><option value="3d_print">3D打印模</option></select></div>
+              <div class="field"><label>摊销策略</label><select id="foodAmortization"><option value="order">按订单分摊</option><option value="lifecycle">按生命周期分摊</option><option value="hybrid">混合模式</option></select></div>
+            </div>
+            <div class="two">
+              <div class="field"><label>模具寿命产量</label><input id="foodMoldLife" type="number" min="0" placeholder="生命周期分摊时填写" /></div>
+              <div class="field"><label>食品工艺</label><select id="foodColorProcess"><option value="">系统判断</option><option value="single">单色注浆</option><option value="dual">双色分层</option><option value="multi">多色嵌套</option><option value="hand_painted">手绘装饰</option></select></div>
+            </div>
+            <div class="two">
+              <div class="field"><label>复杂系数</label><input id="foodComplexity" type="number" min="0" step="0.1" placeholder="例如 1.3" /></div>
+              <div class="field"><label>冷链/存储单件费</label><input id="foodColdCost" type="number" min="0" placeholder="例如 0.8" /></div>
+            </div>
+            <div class="two three-fields">
+              <div class="field"><label>内包装</label><input id="foodInnerPack" type="number" min="0" placeholder="0.1" /></div>
+              <div class="field"><label>单体包装</label><input id="foodSinglePack" type="number" min="0" placeholder="0.8" /></div>
+              <div class="field"><label>外包装</label><input id="foodOuterPack" type="number" min="0" placeholder="2.0" /></div>
+            </div>
+            <div class="two three-fields">
+              <div class="field"><label>运输包装</label><input id="foodTransportPack" type="number" min="0" placeholder="0.1" /></div>
+              <div class="field"><label>检测费/批</label><input id="foodDetectionFee" type="number" min="0" placeholder="1000" /></div>
+              <div class="field"><label>认证费</label><input id="foodCertificationFee" type="number" min="0" placeholder="选填" /></div>
+            </div>
+            <div class="two three-fields">
+              <div class="field"><label>版费/开机费</label><input id="foodSetupFee" type="number" min="0" placeholder="选填" /></div>
+              <div class="field"><label>管理利润率</label><input id="foodProfitRate" type="number" min="0" max="1" step="0.01" placeholder="0.15" /></div>
+              <div class="field"><label>税率</label><input id="foodTaxRate" type="number" min="0" max="0.3" step="0.01" placeholder="0.13" /></div>
+            </div>
+          </details>
+          <button class="btn btn-primary submit" id="quoteBtn">生成报价粗估</button>
+        </section>
+
+        <section class="panel pricing-result-panel">
+          <div class="empty" id="priceEmpty"><div class="empty-symbol">￥</div><p>填写左侧参数后，这里会展示单件成本、总成本、数量阶梯价、工期和风险提示。</p></div>
+          <div class="loading" id="priceLoading" style="display:none;"><div class="loader"></div><p>正在计算报价模型...</p></div>
+          <div class="error" id="priceError" style="display:none;"><div class="empty-symbol">!</div><p>报价失败</p><p class="error-detail" id="priceErrorDetail"></p></div>
+          <div class="pricing-result" id="priceResult" style="display:none;"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+</main>
+
+<a class="mobile-float-cta nav-view" id="mobileCta" href="#demo" data-target="demo">立即生成方案</a>
+
+<footer class="footer">
+  <div class="container footer-inner"><span>之间味道 AND TASTE · AI Cultural Product Studio</span><span>文创设计 / 产品提案 / 定制开发</span></div>
+</footer>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  function switchView(target) {
+    const view = target || 'home';
+    document.querySelectorAll('.app-view').forEach(section => {
+      section.classList.toggle('active', section.dataset.view === view);
     });
-  </script>
+    document.querySelectorAll('.nav-view').forEach(link => {
+      link.classList.toggle('active', link.dataset.target === view);
+    });
+    if (location.hash !== '#' + view) history.replaceState(null, '', '#' + view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.querySelectorAll('.nav-view').forEach(link => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const target = link.dataset.target || 'home';
+      switchView(target);
+      if (target === 'demo') setTimeout(() => idea && idea.focus(), 350);
+    });
+  });
+
+  const initialView = (location.hash || '#home').replace('#', '');
+  if (['home', 'service', 'demo', 'pricing'].includes(initialView)) switchView(initialView);
+  const productType = $('productType'), scene = $('scene'), style = $('style'), budget = $('budget'), idea = $('idea');
+  const submit = $('submit'), emptyState = $('emptyState'), loadingState = $('loadingState'), errorState = $('errorState'), errorDetail = $('errorDetail'), resultContent = $('resultContent');
+  const briefEl = $('brief'), imagesEl = $('images'), tripoEl = $('tripo');
+  let current = { requirement: '', brief: '', images: [], tripo: null };
+
+  document.querySelectorAll('.chip').forEach(btn => btn.addEventListener('click', () => { idea.value = btn.dataset.idea; idea.focus(); }));
+  document.querySelectorAll('.case-card').forEach(card => card.addEventListener('click', () => {
+    productType.value = card.dataset.type || productType.value;
+    scene.value = card.dataset.scene || scene.value;
+    style.value = card.dataset.style || style.value;
+    budget.value = card.dataset.budget || budget.value;
+    idea.value = card.dataset.idea || idea.value;
+    switchView('demo');
+    setTimeout(() => idea.focus(), 550);
+  }));
+  const mobileCta = document.getElementById('mobileCta');
+  if (mobileCta) {
+    mobileCta.addEventListener('click', () => setTimeout(() => idea.focus(), 450));
+  }
+  const demoSection = document.getElementById('demo');
+  if ('IntersectionObserver' in window && demoSection) {
+    const observer = new IntersectionObserver(([entry]) => {
+      document.body.classList.toggle('demoInView', entry.isIntersecting);
+    }, { threshold: 0.12 });
+    observer.observe(demoSection);
+  }
+
+  function show(name) {
+    document.body.classList.toggle('generating', name === 'loading');
+    document.body.classList.toggle('has-result', name === 'result');
+    emptyState.style.display = name === 'empty' ? 'flex' : 'none';
+    loadingState.style.display = name === 'loading' ? 'flex' : 'none';
+    errorState.style.display = name === 'error' ? 'flex' : 'none';
+    resultContent.classList.toggle('visible', name === 'result');
+  }
+  function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function renderBrief(md) {
+    return String(md || '').split('\n').map(raw => {
+      const line = raw.trim();
+      if (!line) return '';
+      if (line.startsWith('### ')) return `<h2>${esc(line.replace(/^###\s+/,''))}</h2>`;
+      if (line.startsWith('#### ')) return `<h3>${esc(line.replace(/^####\s+/,''))}</h3>`;
+      if (line.startsWith('- [ ]')) return `<p>□ ${esc(line.replace(/^- \[ \]\s*/,''))}</p>`;
+      if (line.startsWith('- ')) return `<p>• ${esc(line.replace(/^-\s+/,''))}</p>`;
+      return `<p>${esc(line)}</p>`;
+    }).join('');
+  }
+  function buildRequirement() {
+    const ideaText = idea.value.trim() || '希望生成一款有文化感、适合客户购买和传播的文创产品。';
+    return `客户希望开发【${productType.value}】，使用场景为【${scene.value}】，风格方向为【${style.value}】，预算/客单价区间为【${budget.value}】。核心想法：${ideaText}。请输出客户友好的文创设计提案，并兼顾后续打样生产可落地。`;
+  }
+  function buildMaterials() {
+    return `客户演示模式：请让 Brief 更适合对外提案展示，语言清晰、有品牌感；产品必须是可生产的实物文创，不要生成纯插画或海报。若用户未指定材质和工艺，请基于产品类型给出合理默认建议，并保留生产可行性。`;
+  }
+  function renderImages(images) {
+    imagesEl.innerHTML = '';
+    current.images = images || [];
+    current.images.forEach((img) => {
+      const fig = document.createElement('figure');
+      fig.className = 'image-card';
+      fig.innerHTML = `<a href="${esc(img.url)}" target="_blank"><img src="${esc(img.url)}?t=${Date.now()}" alt="${esc(img.angle)}"></a><figcaption>${esc(img.angle)}</figcaption>`;
+      imagesEl.appendChild(fig);
+    });
+  }
+  function renderTripo(tripo, tripoError) {
+    if (tripoError) {
+      tripoEl.innerHTML = `<h3 class="panel-title serif">Tripo 3D 模型</h3><p><strong style="color:var(--danger);">生成失败：</strong>${esc(tripoError)}</p><p>这通常是 API 额度不足或模型权限问题；Brief 与三视图已正常生成，可先用于提案沟通。</p>`;
+      return;
+    }
+    if (!tripo) {
+      tripoEl.innerHTML = `<h3 class="panel-title serif">Tripo 3D 模型</h3><p>未配置 Tripo API Key，已跳过 3D 模型生成。</p>`;
+      return;
+    }
+    current.tripo = tripo;
+    const preview = tripo.previewUrl ? `<img src="${esc(tripo.previewUrl)}" alt="3D 模型预览">` : '<div style="color:var(--muted);">暂无预览图</div>';
+    const links = `${tripo.modelUrl ? `<a class="link-btn" href="${esc(tripo.modelUrl)}" target="_blank">下载模型</a>` : ''}${tripo.previewUrl ? `<a class="link-btn" href="${esc(tripo.previewUrl)}" target="_blank">打开预览</a>` : ''}`;
+    tripoEl.innerHTML = `<h3 class="panel-title serif">Tripo 3D 模型</h3><div class="model-preview">${preview}<div><p>Task ID：${esc(tripo.taskId || '-')}</p><p>状态：${esc(tripo.status || 'success')}</p>${links}</div></div>`;
+  }
+
+  submit.addEventListener('click', async () => {
+    current = { requirement: buildRequirement(), brief: '', images: [], tripo: null };
+    submit.disabled = true; show('loading'); imagesEl.innerHTML = ''; tripoEl.innerHTML = '';
+    try {
+      const res = await fetch('/generate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ requirement: current.requirement, materials: buildMaterials() }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '生成失败');
+      current.brief = data.brief || '';
+      briefEl.innerHTML = renderBrief(current.brief);
+      renderImages(data.images || []);
+      renderTripo(data.tripo, data.tripoError);
+      show('result');
+    } catch (err) {
+      errorDetail.textContent = err.message; show('error');
+    } finally { submit.disabled = false; }
+  });
+
+  $('copyBrief').addEventListener('click', async () => {
+    await navigator.clipboard.writeText(current.brief || '');
+    $('copyBrief').textContent = '已复制'; setTimeout(() => $('copyBrief').textContent = '复制方案', 1300);
+  });
+  $('downloadImages').addEventListener('click', () => current.images.forEach(img => window.open(img.url, '_blank')));
+  $('sendLead').addEventListener('click', async () => {
+    const leadStatus = $('leadStatus'); leadStatus.textContent = '';
+    try {
+      const body = { name: $('leadName').value, phone: $('leadPhone').value, company: $('leadCompany').value, note: $('leadNote').value, requirement: current.requirement, brief: current.brief, images: current.images, tripo: current.tripo };
+      const res = await fetch('/lead', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const data = await res.json(); if (!res.ok) throw new Error(data.error || '提交失败');
+      leadStatus.style.color = 'var(--ok)'; leadStatus.textContent = '已提交，我们会尽快联系您';
+    } catch (err) { leadStatus.style.color = 'var(--danger)'; leadStatus.textContent = err.message; }
+  });
+
+
+  function numValue(id) {
+    const value = document.getElementById(id).value;
+    return value === '' ? null : Number(value);
+  }
+  function money(value) {
+    return '?' + Number(value || 0).toFixed(2);
+  }
+  function showPricing(name) {
+    document.getElementById('priceEmpty').style.display = name === 'empty' ? 'flex' : 'none';
+    document.getElementById('priceLoading').style.display = name === 'loading' ? 'flex' : 'none';
+    document.getElementById('priceError').style.display = name === 'error' ? 'flex' : 'none';
+    document.getElementById('priceResult').style.display = name === 'result' ? 'grid' : 'none';
+  }
+  function riskClass(level) {
+    if (level === 'high') return 'risk-high';
+    if (level === 'medium') return 'risk-medium';
+    return 'risk-low';
+  }
+  function renderQuote(data) {
+    const breakdownRows = (data.breakdown || []).map(item => `<tr><td>${esc(item.name)}</td><td>${money(item.amount)}</td><td>${esc(item.note || '')}</td></tr>`).join('');
+    const tierRows = Object.entries(data.tier_prices || {}).map(([qty, price]) => `<tr><td>${esc(qty)} 件</td><td>${money(price)}</td></tr>`).join('');
+    const timelineRows = (data.timeline || []).map(item => `<tr><td>${esc(item.step)}</td><td>${esc(item.days_min)}-${esc(item.days_max)} 天</td><td>${esc(item.risk || '')}</td></tr>`).join('');
+    const riskRows = (data.risks || []).map(item => `<tr><td class="${riskClass(item.level)}">${esc(item.level)}</td><td>${esc(item.message)}</td><td>${esc(item.suggestion || '')}</td></tr>`).join('');
+    const assumptions = (data.assumptions || []).map(x => `<p>• ${esc(x)}</p>`).join('');
+    const nextSteps = (data.next_steps || []).map(x => `<p>• ${esc(x)}</p>`).join('');
+
+    document.getElementById('priceResult').innerHTML = `
+      <div class="quote-summary">
+        <div class="quote-metric"><span>单件成本</span><b>${money(data.unit_cost)}</b></div>
+        <div class="quote-metric"><span>建议报价</span><b>${money(data.suggested_unit_price)}</b></div>
+        <div class="quote-metric"><span>总成本</span><b>${money(data.total_cost)}</b></div>
+      </div>
+      <div class="quote-card"><h4>报价可信度</h4><p>${esc(data.confidence)}，误差范围：${esc(data.accuracy_range)}；建议 MOQ：${esc(data.moq)} 件。</p><p>${esc(data.gross_margin_reference || '')}</p></div>
+      <div class="quote-card"><h4>成本拆解</h4><table class="quote-table"><thead><tr><th>项目</th><th>金额</th><th>说明</th></tr></thead><tbody>${breakdownRows}</tbody></table></div>
+      <div class="quote-card"><h4>数量阶梯参考价</h4><table class="quote-table"><thead><tr><th>数量</th><th>参考单价</th></tr></thead><tbody>${tierRows}</tbody></table></div>
+      <div class="quote-card"><h4>生产工期预估</h4><table class="quote-table"><thead><tr><th>环节</th><th>周期</th><th>风险点</th></tr></thead><tbody>${timelineRows}</tbody></table></div>
+      <div class="quote-card"><h4>风险预警</h4><table class="quote-table"><thead><tr><th>等级</th><th>风险</th><th>建议</th></tr></thead><tbody>${riskRows || '<tr><td>low</td><td>暂无明显高风险</td><td>继续补齐参数并询价校准</td></tr>'}</tbody></table></div>
+      <div class="quote-card"><h4>估算前提</h4>${assumptions}</div>
+      <div class="quote-card"><h4>下一步建议</h4>${nextSteps}</div>
+    `;
+  }
+  async function submitQuote() {
+    const process = document.getElementById('priceProcess').value.split(/[?,]/).map(x => x.trim()).filter(Boolean);
+    const payload = {
+      category: document.getElementById('priceCategory').value,
+      quantity: Number(document.getElementById('priceQuantity').value || 1),
+      mode: 'structured',
+      material: document.getElementById('priceMaterial').value || null,
+      length_mm: numValue('priceLength'),
+      width_mm: numValue('priceWidth'),
+      height_mm: numValue('priceHeight'),
+      weight_g: numValue('priceWeight'),
+      colors: Number(document.getElementById('priceColors').value || 4),
+      process,
+      packaging: document.getElementById('pricePackaging').value,
+      notes: document.getElementById('priceNotes').value || null,
+      raw_material_price_per_kg: numValue('foodRawPrice'),
+      auxiliary_material_cost_per_unit: numValue('foodAuxCost'),
+      loss_rate: numValue('foodLossRate'),
+      mold_type: document.getElementById('foodMoldType').value || null,
+      mold_fee: numValue('foodMoldFee'),
+      mold_life_units: numValue('foodMoldLife'),
+      amortization_strategy: document.getElementById('foodAmortization').value || 'order',
+      color_process: document.getElementById('foodColorProcess').value || null,
+      complexity_factor: numValue('foodComplexity'),
+      inner_packaging_cost: numValue('foodInnerPack'),
+      single_packaging_cost: numValue('foodSinglePack'),
+      outer_packaging_cost: numValue('foodOuterPack'),
+      transport_packaging_cost: numValue('foodTransportPack'),
+      cold_chain_cost_per_unit: numValue('foodColdCost'),
+      detection_fee: numValue('foodDetectionFee'),
+      certification_fee: numValue('foodCertificationFee'),
+      setup_fee: numValue('foodSetupFee'),
+      management_profit_rate: numValue('foodProfitRate'),
+      tax_rate: numValue('foodTaxRate'),
+      material_price_per_kg: numValue('nonMaterialPriceKg'),
+      material_weight_kg: numValue('nonMaterialWeightKg'),
+      material_price_per_meter: numValue('nonFabricPrice'),
+      fabric_usage_meter_per_unit: numValue('nonFabricUsage'),
+      filling_price_per_kg: numValue('nonFillingPrice'),
+      filling_weight_kg: numValue('nonFillingWeight'),
+      magnet_cost_per_unit: numValue('nonMagnetCost'),
+      mold_complexity_factor: numValue('nonMoldComplexity'),
+      processing_setup_fee: numValue('nonSetupFee'),
+      processing_unit_fee: numValue('nonProcessingUnit'),
+      plating_unit_fee: numValue('nonPlatingUnit'),
+      uv_setup_fee: numValue('nonUvSetup'),
+      uv_unit_fee: numValue('nonUvUnit'),
+      assembly_unit_fee: numValue('nonAssemblyUnit'),
+      opp_bag_cost: numValue('nonOppCost'),
+      blister_card_cost: numValue('nonBlisterCost'),
+      instruction_card_cost: numValue('nonInstructionCost')
+    };
+    showPricing('loading');
+    document.getElementById('quoteBtn').disabled = true;
+    try {
+      const res = await fetch('/pricing/quote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || data.error || '报价失败，请确认 Python 报价服务是否已启动');
+      renderQuote(data);
+      showPricing('result');
+    } catch (err) {
+      document.getElementById('priceErrorDetail').textContent = err.message;
+      showPricing('error');
+    } finally {
+      document.getElementById('quoteBtn').disabled = false;
+    }
+  }
+  const quoteBtn = document.getElementById('quoteBtn');
+  if (quoteBtn) quoteBtn.addEventListener('click', submitQuote);
+
+</script>
 </body>
 </html>

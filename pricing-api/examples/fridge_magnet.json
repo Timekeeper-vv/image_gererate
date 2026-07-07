@@ -1,0 +1,13 @@
+﻿{
+  "category": "fridge_magnet",
+  "quantity": 2000,
+  "mode": "structured",
+  "material": "锌合金",
+  "length_mm": 65,
+  "width_mm": 48,
+  "height_mm": 4,
+  "colors": 6,
+  "process": ["压铸", "电镀", "滴胶"],
+  "packaging": "standard",
+  "notes": "城市地标冰箱贴"
+}

@@ -1,12 +1,24 @@
-const http = require('http');
+﻿const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { generateAndSaveImage, IMAGES_DIR } = require('./lib');
+const { generateAndSaveImage, generateTripoModel, IMAGES_DIR } = require('./lib');
 const { SYSTEM_PROMPT, buildUserMessage, splitBriefAndPrompt } = require('./brief-template');
 
 const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf-8'));
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const PORT = 3000;
+const LEADS_DIR = path.join(__dirname, 'leads');
+const PORT = Number(process.env.PORT || 3000);
+const PRICING_API_URL = process.env.PRICING_API_URL || 'http://127.0.0.1:8001';
+const CONTENT_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
+};
 
 async function generateBrief(requirement, materials) {
   const res = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
@@ -41,16 +53,27 @@ async function generateBrief(requirement, materials) {
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let chunks = '';
-    req.on('data', (c) => (chunks += c));
+    req.on('data', (c) => {
+      chunks += c;
+      if (chunks.length > 2 * 1024 * 1024) {
+        reject(new Error('请求体过大'));
+        req.destroy();
+      }
+    });
     req.on('end', () => resolve(chunks));
     req.on('error', reject);
   });
 }
 
+function sendJson(res, status, data) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(data));
+}
+
 function serveStatic(req, res, filePath, contentType) {
   fs.readFile(filePath, (err, data) => {
     if (err) {
-      res.writeHead(404);
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
       res.end('Not found');
       return;
     }
@@ -59,27 +82,88 @@ function serveStatic(req, res, filePath, contentType) {
   });
 }
 
+function saveLead(lead) {
+  fs.mkdirSync(LEADS_DIR, { recursive: true });
+  const record = {
+    ...lead,
+    createdAt: new Date().toISOString(),
+  };
+  fs.appendFileSync(path.join(LEADS_DIR, 'leads.jsonl'), JSON.stringify(record) + '\n', 'utf-8');
+  return record;
+}
+
 const server = http.createServer(async (req, res) => {
-  if (req.method === 'GET' && req.url === '/') {
-    serveStatic(req, res, path.join(PUBLIC_DIR, 'index.html'), 'text/html; charset=utf-8');
-    return;
-  }
+  try {
+    if (req.method === 'GET' && req.url.split('?')[0] === '/') {
+      serveStatic(req, res, path.join(PUBLIC_DIR, 'index.html'), 'text/html; charset=utf-8');
+      return;
+    }
 
-  if (req.method === 'GET' && req.url.startsWith('/images/')) {
-    const pathname = req.url.split('?')[0];
-    const filename = decodeURIComponent(pathname.replace('/images/', ''));
-    serveStatic(req, res, path.join(IMAGES_DIR, filename), 'image/png');
-    return;
-  }
+    if (req.method === 'GET' && req.url === '/pricing/health') {
+      const pricingRes = await fetch(`${PRICING_API_URL}/health`);
+      const text = await pricingRes.text();
+      res.writeHead(pricingRes.status, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(text);
+      return;
+    }
+    if (req.method === 'GET' && req.url !== '/' && !req.url.startsWith('/images/')) {
+      const pathname = req.url.split('?')[0];
+      const filename = path.basename(decodeURIComponent(pathname));
+      const filePath = path.join(PUBLIC_DIR, filename);
+      const contentType = CONTENT_TYPES[path.extname(filename).toLowerCase()] || 'application/octet-stream';
+      serveStatic(req, res, filePath, contentType);
+      return;
+    }
 
-  if (req.method === 'POST' && req.url === '/generate') {
-    try {
-      const body = JSON.parse(await readBody(req));
-      const requirement = (body.requirement || '').trim();
+    if (req.method === 'GET' && req.url.startsWith('/images/')) {
+      const pathname = req.url.split('?')[0];
+      const filename = path.basename(decodeURIComponent(pathname.replace('/images/', '')));
+      serveStatic(req, res, path.join(IMAGES_DIR, filename), 'image/png');
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/pricing/quote') {
+      const raw = await readBody(req);
+      const pricingRes = await fetch(`${PRICING_API_URL}/quote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: raw,
+      });
+      const text = await pricingRes.text();
+      res.writeHead(pricingRes.status, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(text);
+      return;
+    }
+
+
+    if (req.method === 'POST' && req.url === '/lead') {
+      const body = JSON.parse(await readBody(req) || '{}');
+      const name = String(body.name || '').trim();
+      const phone = String(body.phone || '').trim();
+      if (!name || !phone) {
+        sendJson(res, 400, { error: '请填写姓名和联系方式' });
+        return;
+      }
+      const lead = saveLead({
+        name,
+        phone,
+        company: String(body.company || '').trim(),
+        note: String(body.note || '').trim(),
+        requirement: String(body.requirement || '').trim(),
+        brief: String(body.brief || '').slice(0, 12000),
+        images: Array.isArray(body.images) ? body.images.slice(0, 6) : [],
+        tripo: body.tripo || null,
+      });
+      sendJson(res, 200, { ok: true, leadId: lead.createdAt });
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/generate') {
+      const body = JSON.parse(await readBody(req) || '{}');
+      const requirement = String(body.requirement || '').trim();
       const materials = body.materials || '';
       if (!requirement) {
-        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ error: '请输入原始需求' }));
+        sendJson(res, 400, { error: '请输入产品需求' });
         return;
       }
 
@@ -90,29 +174,39 @@ const server = http.createServer(async (req, res) => {
           ? promptData.image_size
           : config.imageSize;
 
+      const sharedSeed = Math.floor(Math.random() * 2 ** 31);
       const images = [];
       for (const view of promptData.views) {
         const { filename } = await generateAndSaveImage(config, {
-          prompt: view.positive_prompt,
+          prompt: `${promptData.base_prompt}, ${view.angle_prompt}`,
           negative: promptData.negative_prompt,
           size: validSize,
           steps: promptData.steps,
           cfg: promptData.cfg,
+          seed: sharedSeed,
         });
         images.push({ angle: view.angle, url: `/images/${filename}` });
       }
 
-      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ brief, images }));
-    } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ error: err.message }));
-    }
-    return;
-  }
+      let tripo = null;
+      let tripoError = null;
+      if (process.env.TRIPO_API_KEY || config.tripoApiKey) {
+        try {
+          tripo = await generateTripoModel(config, promptData);
+        } catch (err) {
+          tripoError = err.message;
+        }
+      }
 
-  res.writeHead(404);
-  res.end('Not found');
+      sendJson(res, 200, { brief, images, tripo, tripoError });
+      return;
+    }
+
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Not found');
+  } catch (err) {
+    sendJson(res, 500, { error: err.message });
+  }
 });
 
 server.listen(PORT, () => {

@@ -1,0 +1,11 @@
+﻿{
+  "category": "plush",
+  "quantity": 800,
+  "mode": "structured",
+  "material": "短毛绒",
+  "height_mm": 180,
+  "colors": 5,
+  "process": ["刺绣", "吊牌"],
+  "packaging": "standard",
+  "notes": "IP角色毛绒挂件"
+}

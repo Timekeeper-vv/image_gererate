@@ -1,0 +1,34 @@
+﻿{
+  "version": "food-cost-model-v1",
+  "formula": "总成本 = 原材料成本 + 模具摊销费 + 包装费 + 工艺费 + 冷链/特殊存储费 + 认证检测费 + 管理利润 + 税费",
+  "material": {
+    "loss_rate_range": "3%-8%，复杂造型/多色可上调到8%-12%",
+    "chocolate_default_raw_price_per_kg": 80,
+    "icecream_default_raw_price_per_kg": 42
+  },
+  "mold": {
+    "silicone": { "range": "800-3000", "life_units": "5000-10000" },
+    "abs": { "range": "2000-8000", "life_units": "20000-50000" },
+    "metal": { "range": "5000-20000", "life_units": "100000+" },
+    "3d_print": { "range": "300-1500", "life_units": "500-2000" }
+  },
+  "process": {
+    "single": "0.3-0.8元/件",
+    "dual": "单色价×1.6，约+40%-80%",
+    "multi": "单色价×(1+颜色数×0.5)，约+100%-200%",
+    "hand_painted": "1-3元/件"
+  },
+  "packaging": {
+    "inner": "0.05-0.20元/件",
+    "single": "0.15-0.60元/件",
+    "outer": "0.80-3.00元/件",
+    "transport": "0.10-0.30元/件"
+  },
+  "special": {
+    "cold_chain": "0.5-2.0元/件×距离系数",
+    "testing": "500-2000元/批",
+    "setup_fee": "1000-5000元/次",
+    "management_profit_default": "15%",
+    "tax_default": "13%"
+  }
+}

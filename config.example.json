@@ -2,5 +2,11 @@
   "apiKey": "your-siliconflow-api-key",
   "model": "Kwai-Kolors/Kolors",
   "chatModel": "Qwen/Qwen2.5-32B-Instruct",
-  "imageSize": "1024x1024"
+  "imageSize": "1024x1024",
+  "tripoApiKey": "your-tripo-api-key",
+  "tripoTaskType": "text_to_model",
+  "tripoModelVersion": "v2.5-20250123",
+  "tripoPollIntervalMs": 5000,
+  "tripoMaxWaitMs": 600000,
+  "tripoModel": "v2.5-20250123"
 }

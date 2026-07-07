@@ -1,0 +1,11 @@
+﻿{
+  "category": "chocolate",
+  "quantity": 3000,
+  "mode": "structured",
+  "material": "高端可可脂巧克力",
+  "weight_g": 35,
+  "colors": 2,
+  "process": ["双色", "浮雕", "礼盒"],
+  "packaging": "gift_box",
+  "notes": "博物馆馆藏纹样巧克力礼盒，秋冬销售"
+}

@@ -3,3 +3,6 @@ images/
 .claude/
 node_modules/
 *.log
+leads/
+__pycache__/
+*.pyc
